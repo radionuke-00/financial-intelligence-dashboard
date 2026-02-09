@@ -4,9 +4,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 
-# -----------------------------
-# APP CONFIG
-# -----------------------------
+
 st.set_page_config(
     page_title="Financial Intelligence Dashboard",
     layout="wide"
@@ -15,9 +13,7 @@ st.set_page_config(
 st.title("📊 Financial Intelligence Dashboard")
 st.caption("Decision-support tool for competitions & strategy reviews")
 
-# -----------------------------
-# SIDEBAR — INPUTS
-# -----------------------------
+
 st.sidebar.header("Financial Inputs")
 
 periods = st.sidebar.slider("Number of historical periods", 3, 12, 6)
@@ -46,10 +42,7 @@ scenario = st.sidebar.selectbox(
     ["Base Case", "Stress Case", "Upside Case"]
 )
 
-# -----------------------------
-# DATA PARSING
-# -----------------------------
-def parse_series(text):
+
     return np.array([float(x.strip()) for x in text.split(",")])
 
 revenue = parse_series(revenue)
@@ -63,17 +56,13 @@ scenario_factor = {
     "Upside Case": 1.15
 }[scenario]
 
-# -----------------------------
-# RATIO CALCULATIONS
-# -----------------------------
+
 gross_margin = (revenue[-1] - cogs[-1]) / revenue[-1]
 operating_margin = (revenue[-1] - cogs[-1] - opex[-1]) / revenue[-1]
 debt_to_equity = debt / equity
 cash_runway = cash / opex[-1]
 
-# -----------------------------
-# FORECASTING FUNCTION
-# -----------------------------
+
 def forecast(values, periods=6, factor=1.0):
     X = np.arange(len(values)).reshape(-1, 1)
     y = values
@@ -88,9 +77,7 @@ revenue_forecast = forecast(revenue, factor=scenario_factor)
 profit = revenue - cogs - opex
 profit_forecast = forecast(profit, factor=scenario_factor)
 
-# -----------------------------
-# EXECUTIVE OVERVIEW
-# -----------------------------
+
 st.subheader("Executive Overview")
 
 col1, col2, col3, col4 = st.columns(4)
@@ -115,9 +102,7 @@ col4.metric(
     f"{debt_to_equity:.2f}",
 )
 
-# -----------------------------
-# PERFORMANCE VISUALS
-# -----------------------------
+
 st.subheader("Performance Analysis")
 
 fig, ax = plt.subplots()
@@ -127,9 +112,7 @@ ax.set_title("Revenue vs Profit")
 ax.legend()
 st.pyplot(fig)
 
-# -----------------------------
-# FORECAST VISUALS
-# -----------------------------
+
 st.subheader("Forecast & Scenario Analysis")
 
 fig2, ax2 = plt.subplots()
@@ -148,9 +131,7 @@ ax2.set_title(f"{scenario} Projection")
 ax2.legend()
 st.pyplot(fig2)
 
-# -----------------------------
-# INSIGHTS & RECOMMENDATIONS
-# -----------------------------
+
 st.subheader("Model Insights")
 
 if operating_margin < 0.15:
@@ -164,7 +145,5 @@ if debt_to_equity > 1:
 
 st.success("✅ Model outputs are explainable, scenario-driven, and decision-ready.")
 
-# -----------------------------
-# FOOTER
-# -----------------------------
+
 st.caption("Built for strategy competitions | Explainable financial intelligence")
