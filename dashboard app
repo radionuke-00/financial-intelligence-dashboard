@@ -1,34 +1,23 @@
 import streamlit as st
-import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 
+st.set_page_config(page_title="Financial Intelligence Dashboard", layout="wide")
 
-st.set_page_config(
-    page_title="Financial Intelligence Dashboard",
-    layout="wide"
-)
-
-st.title("📊 Financial Intelligence Dashboard")
-st.caption("Decision-support tool for competitions & strategy reviews")
-
+st.title("Financial Intelligence Dashboard")
 
 st.sidebar.header("Financial Inputs")
 
-periods = st.sidebar.slider("Number of historical periods", 3, 12, 6)
-
-revenue = st.sidebar.text_input(
+revenue_input = st.sidebar.text_input(
     "Revenue (comma separated)",
     "100,120,140,160,180,200"
 )
-
-cogs = st.sidebar.text_input(
+cogs_input = st.sidebar.text_input(
     "COGS (comma separated)",
     "40,48,56,64,72,80"
 )
-
-opex = st.sidebar.text_input(
+opex_input = st.sidebar.text_input(
     "Operating Expenses (comma separated)",
     "30,32,35,38,40,42"
 )
@@ -42,76 +31,65 @@ scenario = st.sidebar.selectbox(
     ["Base Case", "Stress Case", "Upside Case"]
 )
 
-
+def parse_series(text):
     return np.array([float(x.strip()) for x in text.split(",")])
 
-revenue = parse_series(revenue)
-cogs = parse_series(cogs)
-opex = parse_series(opex)
+revenue = parse_series(revenue_input)
+cogs = parse_series(cogs_input)
+opex = parse_series(opex_input)
 
-# Scenario modifiers
 scenario_factor = {
     "Base Case": 1.0,
     "Stress Case": 0.85,
     "Upside Case": 1.15
 }[scenario]
 
-
 gross_margin = (revenue[-1] - cogs[-1]) / revenue[-1]
 operating_margin = (revenue[-1] - cogs[-1] - opex[-1]) / revenue[-1]
 debt_to_equity = debt / equity
 cash_runway = cash / opex[-1]
-
 
 def forecast(values, periods=6, factor=1.0):
     X = np.arange(len(values)).reshape(-1, 1)
     y = values
     model = LinearRegression()
     model.fit(X, y)
-
     future_X = np.arange(len(values), len(values) + periods).reshape(-1, 1)
-    forecast = model.predict(future_X) * factor
-    return forecast
+    return model.predict(future_X) * factor
 
 revenue_forecast = forecast(revenue, factor=scenario_factor)
 profit = revenue - cogs - opex
 profit_forecast = forecast(profit, factor=scenario_factor)
 
-
 st.subheader("Executive Overview")
 
-col1, col2, col3, col4 = st.columns(4)
+c1, c2, c3, c4 = st.columns(4)
 
-col1.metric(
+c1.metric(
     "Revenue Growth",
-    f"{((revenue[-1]/revenue[-2]) - 1)*100:.1f}%",
+    f"{((revenue[-1] / revenue[-2]) - 1) * 100:.1f}%"
 )
-
-col2.metric(
+c2.metric(
     "Operating Margin",
-    f"{operating_margin*100:.1f}%",
+    f"{operating_margin * 100:.1f}%"
 )
-
-col3.metric(
+c3.metric(
     "Cash Runway",
-    f"{cash_runway:.1f} months",
+    f"{cash_runway:.1f} months"
 )
-
-col4.metric(
+c4.metric(
     "Debt / Equity",
-    f"{debt_to_equity:.2f}",
+    f"{debt_to_equity:.2f}"
 )
-
 
 st.subheader("Performance Analysis")
 
-fig, ax = plt.subplots()
-ax.plot(revenue, label="Revenue", linewidth=2)
-ax.plot(profit, label="Profit", linewidth=2)
-ax.set_title("Revenue vs Profit")
-ax.legend()
-st.pyplot(fig)
-
+fig1, ax1 = plt.subplots()
+ax1.plot(revenue, label="Revenue", linewidth=2)
+ax1.plot(profit, label="Profit", linewidth=2)
+ax1.set_title("Revenue vs Profit")
+ax1.legend()
+st.pyplot(fig1)
 
 st.subheader("Forecast & Scenario Analysis")
 
@@ -126,24 +104,18 @@ ax2.plot(
     label="Profit Forecast",
     linewidth=2
 )
-ax2.axvline(len(revenue)-1, linestyle="--", color="gray")
-ax2.set_title(f"{scenario} Projection")
+ax2.axvline(len(revenue) - 1, linestyle="--", color="gray")
+ax2.set_title(scenario)
 ax2.legend()
 st.pyplot(fig2)
 
-
-st.subheader("Model Insights")
+st.subheader("Insights")
 
 if operating_margin < 0.15:
-    st.warning("⚠️ Growth is margin-dilutive at current cost structure.")
+    st.warning("Growth is margin-dilutive at current cost structure.")
 
 if cash_runway < 9:
-    st.error("🚨 Liquidity risk: cash exhaustion within 9 months.")
+    st.error("Liquidity risk: cash exhaustion within 9 months.")
 
 if debt_to_equity > 1:
-    st.info("ℹ️ Capital structure is debt-heavy — refinancing may be required.")
-
-st.success("✅ Model outputs are explainable, scenario-driven, and decision-ready.")
-
-
-st.caption("Built for strategy competitions | Explainable financial intelligence")
+    st.info("Capital structure is debt-heavy.")
